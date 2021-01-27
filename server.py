@@ -26,13 +26,60 @@ import socketserver
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 
+#cd uofastuff/winter2021/cmput404/assignments/cmput404-assignment-webserver
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
     def handle(self):
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        file = self.get_file(self.data)
+        if isinstance(file, str):
+            content_type = self.get_content_type(file)
+            print(content_type)
+            self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n", "utf-8"))
+            self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n", "utf-8"))
+            f = open("www"+file, "r")
+            print ("www"+file)
+            self.request.sendall(bytearray(f.read(), "utf-8"))
+            f.close()
+
+    def get_file(self, data):
+        data = data.decode()
+        file, host = data.split("HTTP/1.1")
+        directory = ""
+        content_type = ""
+        #remove whitespace
+        file = file.strip()
+        #without this line it would be eg. GET /deep
+        file = file.split(" ")[1]
+
+        if file[-1] != "/":
+            return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://localhost:8080" + file + "/", "utf-8"))
+            return 
+
+        if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
+            #remove / at the end so we can open file later
+            file = file[:-1]
+            return file
+
+        elif file == "/" or file == "/deep/":
+            #serve the html file if just root or deep is requested
+            file += "index.html"
+            return file
+
+        else:
+            #serve 404 error
+            return self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n", "utf-8"))
+
+    def get_content_type(self, file):
+        if file == "/index.html" or file == "/deep" or file == "/deep/index.html" or file == "/":
+            return "text/html"
+
+        elif file == "/base.css" or file == "/deep/base.css":
+            return "text/css"
+
+        else:
+            print("error can't get content type for :" + file)
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
