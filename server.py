@@ -1,6 +1,5 @@
 #  coding: utf-8 
 import socketserver
-
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,47 +34,50 @@ class MyWebServer(socketserver.BaseRequestHandler):
         file = self.get_file(self.data)
         if isinstance(file, str):
             content_type = self.get_content_type(file)
-            print(content_type)
             self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n", "utf-8"))
-            self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n", "utf-8"))
-            f = open("www"+file, "r")
-            print ("www"+file)
+            self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n\n", "utf-8"))
+            f = open("www" + file[:-1], "r")
+            print("www" + file[:-1])
+            print(content_type)
             self.request.sendall(bytearray(f.read(), "utf-8"))
             f.close()
 
     def get_file(self, data):
         data = data.decode()
         file, host = data.split("HTTP/1.1")
-        directory = ""
-        content_type = ""
         #remove whitespace
         file = file.strip()
-        #without this line it would be eg. GET /deep
-        file = file.split(" ")[1]
-
-        if file[-1] != "/":
-            return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://localhost:8080" + file + "/", "utf-8"))
-            return 
-
-        if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
-            #remove / at the end so we can open file later
-            file = file[:-1]
-            return file
-
-        elif file == "/" or file == "/deep/":
-            #serve the html file if just root or deep is requested
-            file += "index.html"
-            return file
-
+        method, file = file.split(" ")
+        method = method.strip()
+        print(method)
+        print(file)
+        if method != "GET":
+            return self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n", "utf-8"))
         else:
-            #serve 404 error
-            return self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n", "utf-8"))
+            if file[-1] != "/":
+                return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://localhost:8080" + file + "/\r\n\n", "utf-8"))
+
+            if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
+                return file
+
+            elif file == "/index.html/base.css/" or file == "/deep/index.html/deep.css/":
+                file = file.replace("index.html/", "")
+                return file
+
+            elif file == "/" or file == "/deep/":
+                #serve the html file if just root or deep is requested
+                file += "index.html/"
+                return file
+
+            else:
+                #serve 404 error
+                return self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n\n", "utf-8"))
 
     def get_content_type(self, file):
-        if file == "/index.html" or file == "/deep" or file == "/deep/index.html" or file == "/":
+        if file.endswith(".html/"):
             return "text/html"
 
-        elif file == "/base.css" or file == "/deep/base.css":
+        elif file.endswith(".css/"):
             return "text/css"
 
         else:
