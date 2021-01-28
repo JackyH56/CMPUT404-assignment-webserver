@@ -29,6 +29,9 @@ import socketserver
 
 class MyWebServer(socketserver.BaseRequestHandler):
     def handle(self):
+        """
+        Handles receiving request, opening file and sending back the files that are requested
+        """
         self.data = self.request.recv(1024).strip()
         print ("Got a request of: %s\n" % self.data)
         file = self.get_file(self.data)
@@ -46,6 +49,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\nError 404 Could not find the page you were looking for", "utf-8"))
 
     def get_file(self, data):
+        """
+        Handles parsing the GET request and returning the proper file name
+
+        Parameters
+            data (bytes): The request that needs to be parsed
+    
+        Returns
+            file: the proper file name
+        """
         data = data.decode()
         if data == "":
             return None
@@ -66,33 +78,17 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 return file.replace("index.html/", "")
             else:
                 return file
-            # files = file.split("/")
-            # print(files)
-            # # GET /
-            # if len(files) == 2:
-            #     return "/index.html/"
-            # # GET /something/
-            # elif len(files) == 3:
-            #     print(files[1])
-            #     return "/" + files[1] + "/"
-            # # GET /something/something/
-            # elif len(files) == 4:
-            #     print (files[1] + "/" + files[2])
-            #     return "/" + files[1] + "/" + files[2] + "/"
-            
-            # if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
-            #     return file
-
-            # elif file == "/index.html/base.css/" or file == "/deep/index.html/deep.css/":
-            #     file = file.replace("index.html/", "")
-            #     return file
-
-            # elif file == "/" or file == "/deep/":
-            #     #serve the html file if just root or deep is requested
-            #     file += "index.html/"
-            #     return file
 
     def get_content_type(self, file):
+        """
+        Handles figuring out the right mime-type for the file
+
+        Parameters
+            file (str): The file we need to get the mime-type for
+    
+        Returns
+            the mime-type as a string
+        """
         if file.endswith(".html/"):
             return "text/html"
 
