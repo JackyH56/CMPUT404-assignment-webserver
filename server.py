@@ -33,16 +33,15 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print ("Got a request of: %s\n" % self.data)
         file = self.get_file(self.data)
         if isinstance(file, str):
-            
             try:
                 f = open("www" + file[:-1], "r")
                 content_type = self.get_content_type(file)
                 print("file opened = www" + file[:-1])
                 print("content type = " + content_type)
-                self.request.sendall(bytearray(f.read(), "utf-8"))
-                f.close()
                 self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n", "utf-8"))
                 self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n\n", "utf-8"))
+                self.request.sendall(bytearray(f.read(), "utf-8"))
+                f.close()
             except:
                 self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\nError 404 not found", "utf-8"))
 
