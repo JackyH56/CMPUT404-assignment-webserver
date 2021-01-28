@@ -58,7 +58,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n", "utf-8"))
         else:
             if file[-1] != "/":
-                return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://localhost:8080" + file + "/\r\n\n", "utf-8"))
+                return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://127.0.0.1:8080" + file + "/\r\n\n", "utf-8"))
             
             if file == "/" or (not file.endswith("css/") and not file.endswith("html/")):
                 return file + "index.html/"
