@@ -33,45 +33,65 @@ class MyWebServer(socketserver.BaseRequestHandler):
         print ("Got a request of: %s\n" % self.data)
         file = self.get_file(self.data)
         if isinstance(file, str):
-            content_type = self.get_content_type(file)
-            self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n", "utf-8"))
-            self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n\n", "utf-8"))
-            f = open("www" + file[:-1], "r")
-            print("www" + file[:-1])
-            print(content_type)
-            self.request.sendall(bytearray(f.read(), "utf-8"))
-            f.close()
+            
+            try:
+                f = open("www" + file[:-1], "r")
+                content_type = self.get_content_type(file)
+                print("file opened = www" + file[:-1])
+                print("content type = " + content_type)
+                self.request.sendall(bytearray(f.read(), "utf-8"))
+                f.close()
+                self.request.sendall(bytearray("HTTP/1.1 200 OK\r\n", "utf-8"))
+                self.request.sendall(bytearray("Content-Type: " + content_type + "\r\n\n", "utf-8"))
+            except:
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\nError 404 not found", "utf-8"))
 
     def get_file(self, data):
         data = data.decode()
+        if data == "":
+            return None
         file, host = data.split("HTTP/1.1")
         #remove whitespace
         file = file.strip()
         method, file = file.split(" ")
         method = method.strip()
-        print(method)
-        print(file)
         if method != "GET":
             return self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n", "utf-8"))
         else:
             if file[-1] != "/":
                 return self.request.sendall(bytearray("HTTP/1.1 301 Moved Permenantly\r\nLocation: http://localhost:8080" + file + "/\r\n\n", "utf-8"))
-
-            if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
-                return file
-
-            elif file == "/index.html/base.css/" or file == "/deep/index.html/deep.css/":
-                file = file.replace("index.html/", "")
-                return file
-
-            elif file == "/" or file == "/deep/":
-                #serve the html file if just root or deep is requested
-                file += "index.html/"
-                return file
-
+            
+            if file == "/" or (not file.endswith("css/") and not file.endswith("html/")):
+                return file + "index.html/"
+            elif file.endswith("css/") and file != "/base.css/":
+                return file.replace("index.html/", "")
             else:
-                #serve 404 error
-                return self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n\n", "utf-8"))
+                return file
+            # files = file.split("/")
+            # print(files)
+            # # GET /
+            # if len(files) == 2:
+            #     return "/index.html/"
+            # # GET /something/
+            # elif len(files) == 3:
+            #     print(files[1])
+            #     return "/" + files[1] + "/"
+            # # GET /something/something/
+            # elif len(files) == 4:
+            #     print (files[1] + "/" + files[2])
+            #     return "/" + files[1] + "/" + files[2] + "/"
+            
+            # if file == "/index.html/" or file == "/base.css/" or file == "/deep/index.html/" or file == "/deep/base.css/":
+            #     return file
+
+            # elif file == "/index.html/base.css/" or file == "/deep/index.html/deep.css/":
+            #     file = file.replace("index.html/", "")
+            #     return file
+
+            # elif file == "/" or file == "/deep/":
+            #     #serve the html file if just root or deep is requested
+            #     file += "index.html/"
+            #     return file
 
     def get_content_type(self, file):
         if file.endswith(".html/"):
@@ -81,7 +101,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return "text/css"
 
         else:
-            print("error can't get content type for :" + file)
+            print("How'd you get here? Error can't get content type for :" + file)
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
