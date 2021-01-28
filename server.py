@@ -43,7 +43,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 self.request.sendall(bytearray(f.read(), "utf-8"))
                 f.close()
             except:
-                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\nError 404 not found", "utf-8"))
+                self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\nError 404 Could not find the page you were looking for", "utf-8"))
 
     def get_file(self, data):
         data = data.decode()
